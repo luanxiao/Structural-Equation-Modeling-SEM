@@ -1,0 +1,748 @@
+# The following example illustrates the use the text argument to 
+#   readMoments() and specifyEquations():
+
+R.DHP <- readMoments(diag=FALSE, names=c("ROccAsp", "REdAsp", "FOccAsp", 
+                "FEdAsp", "RParAsp", "RIQ", "RSES", "FSES", "FIQ", "FParAsp"),
+                text="
+    .6247     
+    .3269  .3669       
+    .4216  .3275  .6404
+    .2137  .2742  .1124  .0839
+    .4105  .4043  .2903  .2598  .1839
+    .3240  .4047  .3054  .2786  .0489  .2220
+    .2930  .2407  .4105  .3607  .0186  .1861  .2707
+    .2995  .2863  .5191  .5007  .0782  .3355  .2302  .2950
+    .0760  .0702  .2784  .1988  .1147  .1021  .0931 -.0438  .2087
+")
+
+model.dhp.1 <- specifyEquations(covs="RGenAsp, FGenAsp", text="
+RGenAsp = gam11*RParAsp + gam12*RIQ + gam13*RSES + gam14*FSES + beta12*FGenAsp
+FGenAsp = gam23*RSES + gam24*FSES + gam25*FIQ + gam26*FParAsp + beta21*RGenAsp
+ROccAsp = 1*RGenAsp
+REdAsp = lam21(1)*RGenAsp  # to illustrate setting start values
+FOccAsp = 1*FGenAsp
+FEdAsp = lam42(1)*FGenAsp
+")
+
+sem.dhp.1 <- sem(model.dhp.1, R.DHP, 329,
+    fixed.x=c('RParAsp', 'RIQ', 'RSES', 'FSES', 'FIQ', 'FParAsp'))
+summary(sem.dhp.1)
+
+# Note: The following set of examples can't be run via example() because the default file
+#  argument of specifyeEquations, specifyModel(), and readMoments() requires that the model 
+#  specification and covariances, correlations, or raw moments be entered in an interactive
+#  session at the command prompt. The examples can be copied and run in the R console,
+#  however. See ?specifyModel and ?readMoments for further information.
+#  These examples are repeated below using file input to specifyModel() and
+#  readMoments(). The second version of the examples may be executed through example().
+
+    ## Not run: 
+
+# ------------- Duncan, Haller and Portes peer-influences model ----------------------
+# A nonrecursive SEM with unobserved endogenous variables and fixed exogenous variables
+
+R.DHP <- readMoments(diag=FALSE, names=c("ROccAsp", "REdAsp", "FOccAsp", 
+                "FEdAsp", "RParAsp", "RIQ", "RSES", "FSES", "FIQ", "FParAsp"))
+    .6247     
+    .3269  .3669       
+    .4216  .3275  .6404
+    .2137  .2742  .1124  .0839
+    .4105  .4043  .2903  .2598  .1839
+    .3240  .4047  .3054  .2786  .0489  .2220
+    .2930  .2407  .4105  .3607  .0186  .1861  .2707
+    .2995  .2863  .5191  .5007  .0782  .3355  .2302  .2950
+    .0760  .0702  .2784  .1988  .1147  .1021  .0931 -.0438  .2087
+            
+# Fit the model using a symbolic ram specification
+
+model.dhp <- specifyModel()
+    RParAsp  -> RGenAsp, gam11,  NA
+    RIQ      -> RGenAsp, gam12,  NA
+    RSES     -> RGenAsp, gam13,  NA
+    FSES     -> RGenAsp, gam14,  NA
+    RSES     -> FGenAsp, gam23,  NA
+    FSES     -> FGenAsp, gam24,  NA
+    FIQ      -> FGenAsp, gam25,  NA
+    FParAsp  -> FGenAsp, gam26,  NA
+    FGenAsp  -> RGenAsp, beta12, NA
+    RGenAsp  -> FGenAsp, beta21, NA
+    RGenAsp  -> ROccAsp,  NA,     1
+    RGenAsp  -> REdAsp,  lam21,  NA
+    FGenAsp  -> FOccAsp,  NA,     1
+    FGenAsp  -> FEdAsp,  lam42,  NA
+    RGenAsp <-> RGenAsp, ps11,   NA
+    FGenAsp <-> FGenAsp, ps22,   NA
+    RGenAsp <-> FGenAsp, ps12,   NA
+    ROccAsp <-> ROccAsp, theta1, NA
+    REdAsp  <-> REdAsp,  theta2, NA
+    FOccAsp <-> FOccAsp, theta3, NA
+    FEdAsp  <-> FEdAsp,  theta4, NA
+    
+# an equivalent specification, allowing specifyModel() to generate
+#  variance parameters for endogenous variables (and suppressing the
+#  unnecessary NAs):
+ 
+model.dhp <- specifyModel()
+RParAsp  -> RGenAsp, gam11
+RIQ      -> RGenAsp, gam12
+RSES     -> RGenAsp, gam13
+FSES     -> RGenAsp, gam14
+RSES     -> FGenAsp, gam23
+FSES     -> FGenAsp, gam24
+FIQ      -> FGenAsp, gam25
+FParAsp  -> FGenAsp, gam26
+FGenAsp  -> RGenAsp, beta12
+RGenAsp  -> FGenAsp, beta21
+RGenAsp  -> ROccAsp,  NA,     1
+RGenAsp  -> REdAsp,  lam21
+FGenAsp  -> FOccAsp,  NA,     1
+FGenAsp  -> FEdAsp,  lam42
+RGenAsp <-> FGenAsp, ps12
+
+# Another equivalent specification, telling specifyModel to add paths for 
+#   variances and covariance of RGenAsp and FGenAsp:
+ 
+model.dhp <- specifyModel(covs="RGenAsp, FGenAsp")
+RParAsp  -> RGenAsp, gam11
+RIQ      -> RGenAsp, gam12
+RSES     -> RGenAsp, gam13
+FSES     -> RGenAsp, gam14
+RSES     -> FGenAsp, gam23
+FSES     -> FGenAsp, gam24
+FIQ      -> FGenAsp, gam25
+FParAsp  -> FGenAsp, gam26
+FGenAsp  -> RGenAsp, beta12
+RGenAsp  -> FGenAsp, beta21
+RGenAsp  -> ROccAsp,  NA,     1
+RGenAsp  -> REdAsp,  lam21
+FGenAsp  -> FOccAsp,  NA,     1
+FGenAsp  -> FEdAsp,  lam42
+
+# Yet another equivalent specification using specifyEquations():
+
+model.dhp.1 <- specifyEquations(covs="RGenAsp, FGenAsp")
+RGenAsp = gam11*RParAsp + gam12*RIQ + gam13*RSES + gam14*FSES + beta12*FGenAsp
+FGenAsp = gam23*RSES + gam24*FSES + gam25*FIQ + gam26*FParAsp + beta21*RGenAsp
+ROccAsp = 1*RGenAsp
+REdAsp = lam21(1)*RGenAsp  # to illustrate setting start values
+FOccAsp = 1*FGenAsp
+FEdAsp = lam42(1)*FGenAsp
+ 
+sem.dhp.1 <- sem(model.dhp.1, R.DHP, 329,
+    fixed.x=c('RParAsp', 'RIQ', 'RSES', 'FSES', 'FIQ', 'FParAsp'))
+summary(sem.dhp.1)
+
+# Fit the model using a numerical ram specification (not recommended!)
+
+ram.dhp <- matrix(c(
+#               heads   to      from    param  start
+                1,       1,     11,      0,     1,
+                1,       2,     11,      1,     NA, # lam21
+                1,       3,     12,      0,     1,
+                1,       4,     12,      2,     NA, # lam42
+                1,      11,      5,      3,     NA, # gam11
+                1,      11,      6,      4,     NA, # gam12
+                1,      11,      7,      5,     NA, # gam13
+                1,      11,      8,      6,     NA, # gam14
+                1,      12,      7,      7,     NA, # gam23
+                1,      12,      8,      8,     NA, # gam24
+                1,      12,      9,      9,     NA, # gam25
+                1,      12,     10,     10,     NA, # gam26
+                1,      11,     12,     11,     NA, # beta12
+                1,      12,     11,     12,     NA, # beta21
+                2,       1,      1,     13,     NA, # theta1
+                2,       2,      2,     14,     NA, # theta2
+                2,       3,      3,     15,     NA, # theta3
+                2,       4,      4,     16,     NA, # theta4
+                2,      11,     11,     17,     NA, # psi11
+                2,      12,     12,     18,     NA, # psi22
+                2,      11,     12,     19,     NA  # psi12
+                ), ncol=5, byrow=TRUE)
+
+params.dhp <- c('lam21', 'lam42', 'gam11', 'gam12', 'gam13', 'gam14',
+                 'gam23',  'gam24',  'gam25',  'gam26',
+                 'beta12', 'beta21', 'theta1', 'theta2', 'theta3', 'theta4',
+                 'psi11', 'psi22', 'psi12')
+                 
+vars.dhp <- c('ROccAsp', 'REdAsp', 'FOccAsp', 'FEdAsp', 'RParAsp', 'RIQ',
+                'RSES', 'FSES', 'FIQ', 'FParAsp', 'RGenAsp', 'FGenAsp')
+                
+sem.dhp.2 <- sem(ram.dhp, R.DHP, 329, param.names=params.dhp, var.names=vars.dhp, 
+	fixed.x=5:10)
+summary(sem.dhp.2)
+
+
+# -------------------- Wheaton et al. alienation data ----------------------
+    
+
+S.wh <- readMoments(names=c('Anomia67','Powerless67','Anomia71',
+                                    'Powerless71','Education','SEI'))
+   11.834                                    
+    6.947    9.364                            
+    6.819    5.091   12.532                    
+    4.783    5.028    7.495    9.986            
+   -3.839   -3.889   -3.841   -3.625   9.610     
+  -21.899  -18.831  -21.748  -18.775  35.522  450.288
+
+# This is the model in the SAS manual for PROC CALIS: A Recursive SEM with
+# latent endogenous and exogenous variables.
+# Curiously, both factor loadings for two of the latent variables are fixed.
+
+model.wh.1 <- specifyModel()
+    Alienation67   ->  Anomia67,      NA,     1
+    Alienation67   ->  Powerless67,   NA,     0.833
+    Alienation71   ->  Anomia71,      NA,     1
+    Alienation71   ->  Powerless71,   NA,     0.833 
+    SES            ->  Education,     NA,     1     
+    SES            ->  SEI,           lamb,   NA
+    SES            ->  Alienation67,  gam1,   NA
+    Alienation67   ->  Alienation71,  beta,   NA
+    SES            ->  Alienation71,  gam2,   NA
+    Anomia67       <-> Anomia67,      the1,   NA
+    Anomia71       <-> Anomia71,      the1,   NA
+    Powerless67    <-> Powerless67,   the2,   NA
+    Powerless71    <-> Powerless71,   the2,   NA
+    Education      <-> Education,     the3,   NA
+    SEI            <-> SEI,           the4,   NA
+    Anomia67       <-> Anomia71,      the5,   NA
+    Powerless67    <-> Powerless71,   the5,   NA
+    Alienation67   <-> Alienation67,  psi1,   NA
+    Alienation71   <-> Alienation71,  psi2,   NA
+    SES            <-> SES,           phi,    NA
+                           
+sem.wh.1 <- sem(model.wh.1, S.wh, 932)
+summary(sem.wh.1)
+
+# The same model in equation format:
+
+model.wh.1 <- specifyEquations()
+Anomia67 = 1*Alienation67
+Powerless67 = 0.833*Alienation67
+Anomia71 = 1*Alienation71
+Powerless71 = 0.833*Alienation71
+Education = 1*SES
+SEI = lamb*SES
+Alienation67 = gam1*SES
+Alienation71 = gam2*SES + beta*Alienation67
+V(Anomia67) = the1
+V(Anomia71) = the1
+V(Powerless67) = the2
+V(Powerless71) = the2
+V(SES) = phi
+C(Anomia67, Anomia71) = the5
+C(Powerless67, Powerless71) = the5
+
+# The same model, but treating one loading for each latent variable as free
+# (and equal to each other).
+
+model.wh.2 <- specifyModel()
+    Alienation67   ->  Anomia67,      NA,        1
+    Alienation67   ->  Powerless67,   lamby,    NA
+    Alienation71   ->  Anomia71,      NA,        1
+    Alienation71   ->  Powerless71,   lamby,    NA 
+    SES            ->  Education,     NA,        1     
+    SES            ->  SEI,           lambx,    NA
+    SES            ->  Alienation67,  gam1,     NA
+    Alienation67   ->  Alienation71,  beta,     NA
+    SES            ->  Alienation71,  gam2,     NA
+    Anomia67       <-> Anomia67,      the1,     NA
+    Anomia71       <-> Anomia71,      the1,     NA
+    Powerless67    <-> Powerless67,   the2,     NA
+    Powerless71    <-> Powerless71,   the2,     NA
+    Education      <-> Education,     the3,     NA
+    SEI            <-> SEI,           the4,     NA
+    Anomia67       <-> Anomia71,      the5,     NA
+    Powerless67    <-> Powerless71,   the5,     NA
+    Alienation67   <-> Alienation67,  psi1,     NA
+    Alienation71   <-> Alienation71,  psi2,     NA
+    SES            <-> SES,           phi,      NA 
+
+
+sem.wh.2 <- sem(model.wh.2, S.wh, 932)
+summary(sem.wh.2)
+
+# And again, in equation format:
+
+model.wh <- specifyEquations()
+Anomia67 = 1*Alienation67
+Powerless67 = lamby*Alienation67
+Anomia71 = 1*Alienation71
+Powerless71 = lamby*Alienation71
+Education = 1*SES
+SEI = lambx*SES
+Alienation67 = gam1*SES
+Alienation71 = gam2*SES + beta*Alienation67
+V(Anomia67) = the1
+V(Anomia71) = the1
+V(Powerless67) = the2
+V(Powerless71) = the2
+V(SES) = phi
+C(Anomia67, Anomia71) = the5
+C(Powerless67, Powerless71) = the5
+
+
+# Compare the two models by a likelihood-ratio test:
+
+anova(sem.wh.1, sem.wh.2)
+
+
+# ----------------------- Thurstone data ---------------------------------------
+#  Second-order confirmatory factor analysis, from the SAS manual for PROC CALIS
+
+R.thur <- readMoments(diag=FALSE, names=c('Sentences','Vocabulary',
+        'Sent.Completion','First.Letters','4.Letter.Words','Suffixes',
+        'Letter.Series','Pedigrees', 'Letter.Group'))
+    .828                                              
+    .776   .779                                        
+    .439   .493    .46                                 
+    .432   .464    .425   .674                           
+    .447   .489    .443   .59    .541                    
+    .447   .432    .401   .381    .402   .288              
+    .541   .537    .534   .35    .367   .32   .555        
+    .38   .358    .359   .424    .446   .325   .598   .452  
+            
+model.thur <- specifyModel()
+    F1 -> Sentences,                      lam11
+    F1 -> Vocabulary,                     lam21
+    F1 -> Sent.Completion,                lam31
+    F2 -> First.Letters,                  lam42
+    F2 -> 4.Letter.Words,                 lam52
+    F2 -> Suffixes,                       lam62
+    F3 -> Letter.Series,                  lam73
+    F3 -> Pedigrees,                      lam83
+    F3 -> Letter.Group,                   lam93
+    F4 -> F1,                             gam1
+    F4 -> F2,                             gam2
+    F4 -> F3,                             gam3
+    F1 <-> F1,                            NA,     1
+    F2 <-> F2,                            NA,     1
+    F3 <-> F3,                            NA,     1
+    F4 <-> F4,                            NA,     1
+
+sem.thur <- sem(model.thur, R.thur, 213)
+summary(sem.thur)
+
+# The model in equation format:
+
+model.thur <- specifyEquations()
+Sentences = lam11*F1
+Vocabulary = lam21*F1
+Sent.Completion = lam31*F1
+First.Letters = lam42*F2
+4.Letter.Words = lam52*F2
+Suffixes = lam62*F2
+Letter.Series = lam73*F3
+Pedigrees = lam83*F3
+Letter.Group = lam93*F3
+F1 = gam1*F4
+F2 = gam2*F4
+F3 = gam3*F4
+V(F1) = 1
+V(F2) = 1
+V(F3) = 1
+V(F4) = 1
+
+
+#------------------------- Kerchoff/Kenney path analysis ---------------------
+# An observed-variable recursive SEM from the LISREL manual
+
+R.kerch <- readMoments(diag=FALSE, names=c('Intelligence','Siblings',
+                        'FatherEd','FatherOcc','Grades','EducExp','OccupAsp'))
+    -.100                                
+     .277  -.152                          
+     .250  -.108  .611                     
+     .572  -.105  .294   .248               
+     .489  -.213  .446   .410   .597         
+     .335  -.153  .303   .331   .478   .651   
+    
+model.kerch <- specifyModel()
+    Intelligence -> Grades,       gam51
+    Siblings -> Grades,           gam52
+    FatherEd -> Grades,           gam53
+    FatherOcc -> Grades,          gam54
+    Intelligence -> EducExp,      gam61
+    Siblings -> EducExp,          gam62
+    FatherEd -> EducExp,          gam63
+    FatherOcc -> EducExp,         gam64
+    Grades -> EducExp,            beta65
+    Intelligence -> OccupAsp,     gam71
+    Siblings -> OccupAsp,         gam72
+    FatherEd -> OccupAsp,         gam73
+    FatherOcc -> OccupAsp,        gam74
+    Grades -> OccupAsp,           beta75
+    EducExp -> OccupAsp,          beta76
+                       
+sem.kerch <- sem(model.kerch, R.kerch, 737, 
+    fixed.x=c('Intelligence', 'Siblings', 'FatherEd', 'FatherOcc'))
+summary(sem.kerch)
+
+# The model in equation format:
+
+model.kerch <- specifyEquations()
+Grades = gam51*Intelligence + gam52*Siblings + gam53*FatherEd 
+           + gam54*FatherOcc
+EducExp = gam61*Intelligence + gam62*Siblings + gam63*FatherEd 
+            + gam64*FatherOcc + beta65*Grades
+OccupAsp = gam71*Intelligence + gam72*Siblings + gam73*FatherEd 
+            + gam74*FatherOcc + beta75*Grades + beta76*EducExp
+
+
+#------------------- McArdle/Epstein latent-growth-curve model -----------------
+# This model, from McArdle and Epstein (1987, p.118), illustrates the use of a 
+# raw moment matrix to fit a model with an intercept. (The example was suggested
+# by Mike Stoolmiller.)
+
+M.McArdle <- readMoments(
+    names=c('WISC1', 'WISC2', 'WISC3', 'WISC4', 'UNIT'))
+    365.661                                      
+    503.175     719.905                           
+    675.656     958.479    1303.392                
+    890.680    1265.846    1712.475    2278.257     
+     18.034      25.819      35.255      46.593     1.000
+ 
+mod.McArdle <- specifyModel()
+    C -> WISC1, NA, 6.07
+    C -> WISC2, B2, NA
+    C -> WISC3, B3, NA
+    C -> WISC4, B4, NA
+    UNIT -> C, Mc, NA
+    C <-> C, Vc, NA,
+    WISC1 <-> WISC1, Vd, NA
+    WISC2 <-> WISC2, Vd, NA
+    WISC3 <-> WISC3, Vd, NA
+    WISC4 <-> WISC4, Vd, NA
+
+sem.McArdle <- sem(mod.McArdle, M.McArdle, 204, fixed.x="UNIT", raw=TRUE)
+summary(sem.McArdle)
+
+# The model in equation format:
+
+mod.McArdle <- specifyEquations()
+WISC1 = 6.07*C
+WISC2 = B2*C
+WISC3 = B3*C
+WISC4 = b4*C
+C = Mc*UNIT
+v(C) = Vc
+v(WISC1) = Vd
+v(WISC2) = Vd
+v(WISC3) = Vd
+v(WISC4) = Vd
+
+    
+#------------ Bollen industrialization and democracy example -----------------
+# This model, from Bollen (1989, Ch. 8), illustrates the use in sem() of a
+# case-by-variable data (see ?Bollen) set rather than a covariance or moment matrix
+
+model.bollen <- specifyModel()
+	Demo60 -> y1, NA, 1
+	Demo60 -> y2, lam2, 
+	Demo60 -> y3, lam3, 
+	Demo60 -> y4, lam4, 
+	Demo65 -> y5, NA, 1
+	Demo65 -> y6, lam2, 
+	Demo65 -> y7, lam3, 
+	Demo65 -> y8, lam4, 
+	Indust -> x1, NA, 1
+	Indust -> x2, lam6, 
+	Indust -> x3, lam7, 
+	y1 <-> y5, theta15
+	y2 <-> y4, theta24
+	y2 <-> y6, theta26
+	y3 <-> y7, theta37
+	y4 <-> y8, theta48
+	y6 <-> y8, theta68
+	Indust -> Demo60, gamma11, 
+	Indust -> Demo65, gamma21, 
+	Demo60 -> Demo65, beta21, 
+	Indust <-> Indust, phi
+	
+sem.bollen <- sem(model.bollen, data=Bollen)
+summary(sem.bollen)
+summary(sem.bollen, robust=TRUE) # robust SEs and tests
+summary(sem.bollen, analytic.se=FALSE) # uses numeric rather than analytic Hessian
+
+  # GLS rather than ML estimator:
+sem.bollen.gls <- sem(model.bollen, data=Bollen, objective=objectiveGLS) 
+summary(sem.bollen.gls)
+
+# The model in equation format:
+
+model.bollen <- specifyEquations()
+y1 = 1*Demo60
+y2 = lam2*Demo60
+y3 = lam3*Demo60
+y4 = lam4*Demo60
+y5 = 1*Demo65
+y6 = lam2*Demo65
+y7 = lam3*Demo65
+y8 = lam4*Demo65
+x1 = 1*Indust
+x2 = lam6*Indust
+x3 = lam7*Indust
+c(y1, y5) = theta15
+c(y2, y4) = theta24
+c(y2, y6) = theta26
+c(y3, y7) = theta37
+c(y4, y8) = theta48
+c(y6, y8) = theta68
+Demo60 = gamma11*Indust
+Demo65 = gamma21*Indust + beta21*Demo60
+v(Indust) = phi
+
+
+# -------------- A simple CFA model for the Thurstone mental tests data --------------
+
+R.thur <- readMoments(diag=FALSE, 
+  names=c('Sentences','Vocabulary',
+          'Sent.Completion','First.Letters','4.Letter.Words','Suffixes',
+          'Letter.Series','Pedigrees', 'Letter.Group'))
+.828                                              
+.776   .779                                        
+.439   .493    .46                                 
+.432   .464    .425   .674                           
+.447   .489    .443   .59    .541                    
+.447   .432    .401   .381    .402   .288              
+.541   .537    .534   .35    .367   .32   .555        
+.38   .358    .359   .424    .446   .325   .598   .452
+
+	#  (1) in CFA format:
+
+mod.cfa.thur.c <- cfa(reference.indicators=FALSE)
+FA: Sentences, Vocabulary, Sent.Completion
+FB: First.Letters, 4.Letter.Words, Suffixes
+FC: Letter.Series, Pedigrees, Letter.Group
+
+cfa.thur.c <- sem(mod.cfa.thur.c, R.thur, 213)
+summary(cfa.thur.c)
+
+	#  (2) in equation format:
+
+mod.cfa.thur.e <- specifyEquations(covs="F1, F2, F3")
+Sentences = lam11*F1
+Vocabulary = lam21*F1
+Sent.Completion = lam31*F1
+First.Letters = lam42*F2
+4.Letter.Words = lam52*F2
+Suffixes = lam62*F2
+Letter.Series = lam73*F3
+Pedigrees = lam83*F3
+Letter.Group = lam93*F3
+V(F1) = 1
+V(F2) = 1
+V(F3) = 1
+
+cfa.thur.e <- sem(mod.cfa.thur.e, R.thur, 213)
+summary(cfa.thur.e)
+
+	#  (3) in path format:
+
+mod.cfa.thur.p <- specifyModel(covs="F1, F2, F3")
+F1 -> Sentences,                      lam11
+F1 -> Vocabulary,                     lam21
+F1 -> Sent.Completion,                lam31
+F2 -> First.Letters,                  lam41
+F2 -> 4.Letter.Words,                 lam52
+F2 -> Suffixes,                       lam62
+F3 -> Letter.Series,                  lam73
+F3 -> Pedigrees,                      lam83
+F3 -> Letter.Group,                   lam93
+F1 <-> F1,                            NA,     1
+F2 <-> F2,                            NA,     1
+F3 <-> F3,                            NA,     1
+
+cfa.thur.p <- sem(mod.cfa.thur.p, R.thur, 213)
+summary(cfa.thur.p)
+
+# -----  a CFA model fit by FIML to the mental-tests dataset with missing data -----
+
+mod.cfa.tests <- cfa(raw=TRUE)
+verbal: x1, x2, x3
+math: y1, y2, y3
+
+cfa.tests <- sem(mod.cfa.tests, data=Tests, na.action=na.pass, 
+                objective=objectiveFIML, fixed.x="Intercept")
+summary(cfa.tests)
+summary(cfa.tests, saturated=TRUE) # takes time to fit saturated model for comparison
+
+
+# ---  a multigroup CFA model fit to the Holzinger-Swineford mental-tests data  -----
+
+library(MBESS) # for data
+data(HS.data)
+
+mod.hs <- cfa()
+spatial: visual, cubes, paper, flags
+verbal: general, paragrap, sentence, wordc, wordm
+memory: wordr, numberr, figurer, object, numberf, figurew
+math: deduct, numeric, problemr, series, arithmet
+
+mod.mg <- multigroupModel(mod.hs, groups=c("Female", "Male")) 
+
+sem.mg <- sem(mod.mg, data=HS.data, group="Gender",
+              formula = ~ visual + cubes + paper + flags +
+              general + paragrap + sentence + wordc + wordm +
+              wordr + numberr + figurer + object + numberf + figurew +
+              deduct + numeric + problemr + series + arithmet
+              )
+summary(sem.mg)
+
+	# with cross-group equality constraints:
+	
+mod.mg.eq <- multigroupModel(mod.hs, groups=c("Female", "Male"), allEqual=TRUE)
+
+sem.mg.eq <- sem(mod.mg.eq, data=HS.data, group="Gender",
+              formula = ~ visual + cubes + paper + flags +
+                general + paragrap + sentence + wordc + wordm +
+                wordr + numberr + figurer + object + numberf + figurew +
+                deduct + numeric + problemr + series + arithmet
+              )
+summary(sem.mg.eq)
+
+anova(sem.mg, sem.mg.eq) # test equality constraints
+	
+## End(Not run)
+
+## ===============================================================================
+	
+# The following examples use file input and may be executed via example():
+
+etc <- system.file(package="sem", "etc") # path to data and model files
+
+#   to get all fit indices (not recommended, but for illustration):
+
+opt <- options(fit.indices = c("GFI", "AGFI", "RMSEA", "NFI", "NNFI", 
+         "CFI", "RNI", "IFI", "SRMR", "AIC", "AICc", "BIC", "CAIC"))
+
+# ------------- Duncan, Haller and Portes peer-influences model ----------------------
+# A nonrecursive SEM with unobserved endogenous variables and fixed exogenous variables
+
+(R.DHP <- readMoments(file=file.path(etc, "R-DHP.txt"),
+				diag=FALSE, names=c("ROccAsp", "REdAsp", "FOccAsp", 
+                "FEdAsp", "RParAsp", "RIQ", "RSES", "FSES", "FIQ", "FParAsp")))
+(model.dhp <- specifyModel(file=file.path(etc, "model-DHP.txt")))
+sem.dhp.1 <- sem(model.dhp, R.DHP, 329,
+    fixed.x=c('RParAsp', 'RIQ', 'RSES', 'FSES', 'FIQ', 'FParAsp'))
+summary(sem.dhp.1)
+
+
+# -------------------- Wheaton et al. alienation data ----------------------
+
+(S.wh <- readMoments(file=file.path(etc, "S-Wheaton.txt"),
+					names=c('Anomia67','Powerless67','Anomia71',
+                            'Powerless71','Education','SEI')))
+
+# This is the model in the SAS manual for PROC CALIS: A Recursive SEM with
+# latent endogenous and exogenous variables.
+# Curiously, both factor loadings for two of the latent variables are fixed.
+
+(model.wh.1 <- specifyModel(file=file.path(etc, "model-Wheaton-1.txt")))                    
+sem.wh.1 <- sem(model.wh.1, S.wh, 932)
+summary(sem.wh.1)
+
+# The same model, but treating one loading for each latent variable as free
+# (and equal to each other).
+
+(model.wh.2 <- specifyModel(file=file.path(etc, "model-Wheaton-2.txt")))
+sem.wh.2 <- sem(model.wh.2, S.wh, 932)
+summary(sem.wh.2)
+
+# Compare the two models by a likelihood-ratio test:
+
+anova(sem.wh.1, sem.wh.2)
+
+
+# ----------------------- Thurstone data ---------------------------------------
+
+#  Second-order confirmatory factor analysis, from the SAS manual for PROC CALIS
+
+(R.thur <- readMoments(file=file.path(etc, "R-Thurstone.txt"),
+		diag=FALSE, names=c('Sentences','Vocabulary',
+        'Sent.Completion','First.Letters','4.Letter.Words','Suffixes',
+        'Letter.Series','Pedigrees', 'Letter.Group')))
+(model.thur <- specifyModel(file=file.path(etc, "model-Thurstone.txt")))
+sem.thur <- sem(model.thur, R.thur, 213)
+summary(sem.thur)
+
+
+#------------------------- Kerchoff/Kenney path analysis ---------------------
+
+# An observed-variable recursive SEM from the LISREL manual
+
+(R.kerch <- readMoments(file=file.path(etc, "R-Kerchoff.txt"),
+					   diag=FALSE, names=c('Intelligence','Siblings',
+                        'FatherEd','FatherOcc','Grades','EducExp','OccupAsp')))
+(model.kerch <- specifyModel(file=file.path(etc, "model-Kerchoff.txt")))
+sem.kerch <- sem(model.kerch, R.kerch, 737, 
+    fixed.x=c('Intelligence', 'Siblings', 'FatherEd', 'FatherOcc'))
+summary(sem.kerch)
+
+
+#------------------- McArdle/Epstein latent-growth-curve model -----------------
+
+# This model, from McArdle and Epstein (1987, p.118), illustrates the use of a 
+# raw moment matrix to fit a model with an intercept. (The example was suggested
+# by Mike Stoolmiller.)
+
+(M.McArdle <- readMoments(file=file.path(etc, "M-McArdle.txt"),
+    names=c('WISC1', 'WISC2', 'WISC3', 'WISC4', 'UNIT')))
+(mod.McArdle <- specifyModel(file=file.path(etc, "model-McArdle.txt")))
+sem.McArdle <- sem(mod.McArdle, M.McArdle, 204, fixed.x="UNIT", raw=TRUE)
+summary(sem.McArdle)
+
+
+#------------ Bollen industrialization and democracy example -----------------
+
+# This model, from Bollen (1989, Ch. 8), illustrates the use in sem() of a
+# case-by-variable data set (see ?Bollen) rather than a covariance or moment matrix
+
+(model.bollen <- specifyModel(file=file.path(etc, "model-Bollen.txt")))
+sem.bollen <- sem(model.bollen, data=Bollen)
+summary(sem.bollen)
+summary(sem.bollen, robust=TRUE) # robust SEs and tests
+summary(sem.bollen, analytic.se=FALSE) # uses numeric rather than analytic Hessian
+
+  # GLS rather than ML estimator:
+sem.bollen.gls <- sem(model.bollen, data=Bollen, objective=objectiveGLS) 
+summary(sem.bollen.gls)
+
+# -----  a CFA model fit by FIML to the mental-tests dataset with missing data -----
+
+(mod.cfa.tests <- cfa(file=file.path(etc, "model-Tests.txt"), raw=TRUE))
+cfa.tests <- sem(mod.cfa.tests, data=Tests, na.action=na.pass, 
+                optimizer=optimizerNlm, objective=objectiveFIML, fixed.x="Intercept")
+summary(cfa.tests)
+
+#------------ Holzinger and Swineford muiltigroup CFA example ----------------
+
+if (require(MBESS)){ # for data
+	data(HS.data)
+	
+	mod.hs <- cfa(file=file.path(etc, "model-HS.txt"))
+	
+	mod.mg <- multigroupModel(mod.hs, groups=c("Female", "Male")) 
+	
+	sem.mg <- sem(mod.mg, data=HS.data, group="Gender",
+	              formula = ~ visual + cubes + paper + flags +
+	              general + paragrap + sentence + wordc + wordm +
+	              wordr + numberr + figurer + object + numberf + figurew +
+	              deduct + numeric + problemr + series + arithmet
+	              )
+	summary(sem.mg)
+	
+		# with cross-group equality constraints:
+		
+	mod.mg.eq <- multigroupModel(mod.hs, groups=c("Female", "Male"), allEqual=TRUE)
+	
+	sem.mg.eq <- sem(mod.mg.eq, data=HS.data, group="Gender",
+	              formula = ~ visual + cubes + paper + flags +
+	                general + paragrap + sentence + wordc + wordm +
+	                wordr + numberr + figurer + object + numberf + figurew +
+	                deduct + numeric + problemr + series + arithmet
+	              )
+	summary(sem.mg.eq)
+	
+	anova(sem.mg, sem.mg.eq) # test equality constraints
+    
+    options(opt) # restore fit.indices option
+	}
